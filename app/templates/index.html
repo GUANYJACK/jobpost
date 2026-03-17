@@ -2,7 +2,8 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>👔JobPost</title>
+    <title>JobPost</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E👔%3C/text%3E%3C/svg%3E" />
     <style>
         body {
             font-family: 'Montserrat', 'PingFang SC', 'Segoe UI', Arial, sans-serif;
@@ -193,7 +194,7 @@
             color: #fff;
             transform: translateY(-1px);
         }
-        .sort-toggle {
+        .filter-toggle, .sort-toggle {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -201,11 +202,11 @@
             padding: 6px 10px;
             border-radius: 999px;
         }
-        .sort-toggle span {
+        .filter-toggle span, .sort-toggle span {
             color: #6b5c85;
             font-size: 0.9rem;
         }
-        .sort-btn {
+        .filter-btn, .sort-btn {
             padding: 5px 10px;
             border-radius: 999px;
             text-decoration: none;
@@ -214,8 +215,9 @@
             background: rgba(255, 255, 255, 0.65);
             font-size: 0.85rem;
             transition: background 0.15s, transform 0.15s;
+            cursor: pointer;
         }
-        .sort-btn.active {
+        .filter-btn.active, .sort-btn.active {
             background: #DC6ACF;
             color: #fff;
             transform: translateY(-1px);
@@ -369,6 +371,24 @@
             });
         }
 
+        function initFilters() {
+            const params = new URLSearchParams(window.location.search);
+            const currentSort = params.get('sort') || 'scraped_desc';
+            const currentFilter = params.get('filter') || 'all';
+
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.filter === currentFilter) {
+                    btn.classList.add('active');
+                }
+                btn.addEventListener('click', () => {
+                    params.set('filter', btn.dataset.filter);
+                    params.set('sort', currentSort);
+                    window.location.search = params.toString();
+                });
+            });
+        }
+
         async function submitUrl(event) {
             event.preventDefault();
             showProgress();
@@ -398,7 +418,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', initViewMode);
+        document.addEventListener('DOMContentLoaded', () => {
+            initViewMode();
+            initFilters();
+        });
     </script>
 </head>
 <body>
@@ -424,10 +447,18 @@
         <div class="jobs-header">
             <h2>职位列表</h2>
             <div class="jobs-controls">
+                <div class="filter-toggle">
+                    <span>筛选：</span>
+                    <button type="button" class="filter-btn {% if filter == 'all' %}active{% endif %}" data-filter="all">全部</button>
+                    <button type="button" class="filter-btn {% if filter == 'applied' %}active{% endif %}" data-filter="applied">已投递</button>
+                    <button type="button" class="filter-btn {% if filter == 'pending' %}active{% endif %}" data-filter="pending">未投递</button>
+                </div>
                 <div class="sort-toggle">
                     <span>排序：</span>
-                    <a href="/?sort=asc" class="sort-btn {% if sort == 'asc' %}active{% endif %}" data-sort="asc">时间↑</a>
-                    <a href="/?sort=desc" class="sort-btn {% if sort != 'asc' %}active{% endif %}" data-sort="desc">时间↓</a>
+                    <a href="/?sort=scraped_asc&filter={{ filter }}" class="sort-btn {% if sort == 'scraped_asc' %}active{% endif %}" data-sort="scraped_asc">抓取↑</a>
+                    <a href="/?sort=scraped_desc&filter={{ filter }}" class="sort-btn {% if sort == 'scraped_desc' %}active{% endif %}" data-sort="scraped_desc">抓取↓</a>
+                    <a href="/?sort=applied_asc&filter={{ filter }}" class="sort-btn {% if sort == 'applied_asc' %}active{% endif %}" data-sort="applied_asc">投递↑</a>
+                    <a href="/?sort=applied_desc&filter={{ filter }}" class="sort-btn {% if sort == 'applied_desc' %}active{% endif %}" data-sort="applied_desc">投递↓</a>
                 </div>
                 <div class="view-toggle" id="view-toggle">
                     <button type="button" class="view-toggle-btn" data-view="card">卡片</button>
@@ -442,11 +473,15 @@
                 <a class="job-title" href="/detail/{{ app.id }}">{{ app.job_title or '未知' }}</a>
                 <div class="job-company">{{ app.company_name or '未知' }}</div>
                 <div class="job-right">
-                    <div class="job-meta">薪水：{{ app.salary or '未知' }} | 地点：{{ app.location or '未知' }}</div>
-                    <div class="job-status">状态：
+                    <div class="job-meta">
+                        薪水：{{ app.salary or '未知' }} | 地点：{{ app.location or '未知' }}<br>
+                        抓取：{{ app.scraped_at.strftime('%Y-%m-%d %H:%M') if app.scraped_at else '未知' }}
+                    </div>
+                    <div class="job-status">
+                        状态：
                         {% if app.status == 'Scraped' %}已抓取待投递
                         {% elif app.status == 'Failed' %}抓取失败
-                        {% elif app.status == 'Applied' %}已投递
+                        {% elif app.status == 'Applied' %}已投递（{{ app.applied_at.strftime('%m-%d %H:%M') if app.applied_at else '未知' }}）
                         {% else %}{{ app.status }}
                         {% endif %}
                     </div>

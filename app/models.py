@@ -12,6 +12,7 @@ class Application(SQLModel, table=True):
     compensation: Optional[str]
     jd_text: Optional[str]
     status: str = "Scraped"
+    scraped_at: datetime = Field(default_factory=datetime.utcnow)
     applied_at: Optional[datetime]
     tailored_resume_text: Optional[str]
     final_cover_letter_text: Optional[str]

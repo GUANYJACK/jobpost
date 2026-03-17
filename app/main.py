@@ -14,6 +14,7 @@ from app.resume_utils import extract_text_from_file
 import requests
 import os
 from fastapi import UploadFile
+from datetime import datetime
 
 from fastapi.staticfiles import StaticFiles
 app = FastAPI()
@@ -29,21 +30,47 @@ def on_startup():
 # 前端主页
 # 前端主页
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, sort: str = "desc"):
-    """主页：按提交时间排序（默认降序）。
+def index(request: Request, sort: str = "scraped_desc", filter: str = "all"):
+    """主页：支持按抓取时间/投递时间排序并筛选已投递状态。
 
     sort 参数：
-    - asc: 旧的先（升序）
-    - desc: 新的先（降序）
+    - scraped_desc (默认)：按抓取时间降序
+    - scraped_asc：按抓取时间升序
+    - applied_desc：按投递时间降序
+    - applied_asc：按投递时间升序
+
+    filter 参数：
+    - all（默认）：全部职位
+    - applied：仅显示已投递职位
+    - pending：仅显示未投递职位
     """
     with get_session() as session:
         query = select(Application)
-        if sort == "asc":
-            query = query.order_by(Application.id)
+        if filter == "applied":
+            query = query.where(Application.status == "Applied")
+        elif filter == "pending":
+            query = query.where(Application.status != "Applied")
+
+        if sort == "scraped_asc":
+            query = query.order_by(Application.scraped_at)
+        elif sort == "applied_asc":
+            query = query.order_by(Application.applied_at)
+        elif sort == "applied_desc":
+            query = query.order_by(Application.applied_at.desc())
         else:
-            query = query.order_by(Application.id.desc())
+            # 默认 scraped_desc
+            query = query.order_by(Application.scraped_at.desc())
+
         apps = session.exec(query).all()
-    return templates.TemplateResponse("index.html", {"request": request, "applications": apps, "sort": sort})
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "applications": apps,
+            "sort": sort,
+            "filter": filter,
+        },
+    )
 
 
 # 新增简历页面
@@ -178,7 +205,16 @@ def submit_url(request: Request, url: str = Form(...)):
         existing = session.exec(select(Application).where(Application.url == url)).first()
         if existing:
             apps = session.exec(select(Application).order_by(Application.id.desc())).all()
-            return templates.TemplateResponse("index.html", {"request": request, "applications": apps, "error": "该岗位已存在，无法重复添加"})
+            return templates.TemplateResponse(
+                "index.html",
+                {
+                    "request": request,
+                    "applications": apps,
+                    "error": "该岗位已存在，无法重复添加",
+                    "sort": "scraped_desc",
+                    "filter": "all",
+                },
+            )
 
     data = scrape_job_post(url)
     print(f"[DEBUG] 爬取结果: {data}")
@@ -186,7 +222,16 @@ def submit_url(request: Request, url: str = Form(...)):
         with get_session() as session:
             apps = session.exec(select(Application)).all()
             print(f"[DEBUG] 提取失败，当前数据库职位数: {len(apps)}")
-        return templates.TemplateResponse("index.html", {"request": request, "applications": apps, "error": "无法提取职位信息"})
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "applications": apps,
+                "error": "无法提取职位信息",
+                "sort": "scraped_desc",
+                "filter": "all",
+            },
+        )
     app_obj = Application(
         url=url,
         job_title=data['job_title'],
@@ -195,7 +240,8 @@ def submit_url(request: Request, url: str = Form(...)):
         location=data.get('location'),
         compensation=data.get('compensation'),
         jd_text=data['jd_text'],
-        status="Scraped"
+        status="Scraped",
+        scraped_at=datetime.utcnow(),
     )
     with get_session() as session:
         session.add(app_obj)
@@ -228,7 +274,8 @@ def scrape_and_save(url: str):
         location=data.get('location'),
         compensation=data.get('compensation'),
         jd_text=data['jd_text'],
-        status="Scraped"
+        status="Scraped",
+        scraped_at=datetime.utcnow(),
     )
     with get_session() as session:
         session.add(app_obj)
@@ -250,6 +297,7 @@ def mark_applied(request: Request, app_id: int):
         if not app_obj:
             return HTMLResponse("<h2>未找到该职位</h2>", status_code=404)
         app_obj.status = "Applied"
+        app_obj.applied_at = datetime.utcnow()
         session.add(app_obj)
         session.commit()
         session.refresh(app_obj)
@@ -262,6 +310,7 @@ def mark_unapplied(request: Request, app_id: int):
         if not app_obj:
             return HTMLResponse("<h2>未找到该职位</h2>", status_code=404)
         app_obj.status = "Scraped"
+        app_obj.applied_at = None
         session.add(app_obj)
         session.commit()
         session.refresh(app_obj)
