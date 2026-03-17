@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>职位详情</title>
+    <style>
+        body {
+            font-family: 'Montserrat', 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #F5B0CB 0%, #C4BBB8 100%);
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(57,55,91,0.12);
+            padding: 40px 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        h1 {
+            color: #39375B;
+            margin-bottom: 24px;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+        }
+        .info-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 18px;
+        }
+        .info-item {
+            background: #F5B0CB;
+            border-radius: 12px;
+            padding: 18px 24px;
+            min-width: 180px;
+            flex: 1 1 220px;
+            color: #39375B;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(220,106,207,0.08);
+        }
+        .label {
+            color: #745C97;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .jd-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(57,55,91,0.08);
+            padding: 24px 18px;
+        }
+        .jd-title {
+            color: #DC6ACF;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        pre {
+            background: #F5B0CB;
+            padding: 16px;
+            border-radius: 8px;
+            color: #39375B;
+            font-size: 15px;
+            white-space: pre-wrap;
+        }
+        a {
+            color: #DC6ACF;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            color: #745C97;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 16px 4px; }
+            .info-item { padding: 8px 4px; min-width: 120px; }
+            .jd-section { padding: 8px 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>职位详情</h1>
+    <div class="info-group">
+        <div class="info-item"><span class="label">公司名称：</span>{{ app.company_name or '未知' }}</div>
+        <div class="info-item"><span class="label">职位名称：</span>{{ app.job_title or '未知' }}</div>
+        <div class="info-item"><span class="label">薪水：</span>{{ app.salary or '未知' }}</div>
+        <div class="info-item"><span class="label">地理位置：</span>{{ app.location or '未知' }}</div>
+        <div class="info-item"><span class="label">状态：</span>
+            {% if app.status == 'Scraped' %}已抓取待投递
+            {% elif app.status == 'Failed' %}抓取失败
+            {% elif app.status == 'Applied' %}已投递
+            {% else %}{{ app.status }}
+            {% endif %}
+        </div>
+        <div class="info-item">
+            {% if app.status == 'Scraped' %}
+            <form method="post" action="/mark_applied/{{ app.id }}">
+                <button type="submit" style="background:#745C97;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;">标记为已投递</button>
+            </form>
+            {% elif app.status == 'Applied' %}
+            <form method="post" action="/mark_unapplied/{{ app.id }}">
+                <button type="submit" style="background:#DC6ACF;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;">撤回为未投递</button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="info-item"><span class="label">页面URL：</span><a href="{{ app.url }}" target="_blank">查看原页面</a></div>
+    </div>
+    <div class="jd-section">
+        <div class="jd-title">职位描述</div>
+        <pre>{{ app.jd_text }}</pre>
+    </div>
+    <a href="/">返回列表</a>
+</div>
+</body>
+</html>

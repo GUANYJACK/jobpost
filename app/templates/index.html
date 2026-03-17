@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>👔JobPost</title>
+    <style>
+        body {
+            font-family: 'Montserrat', 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+                background: #F2F2F2;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+                background: #fff;
+                border-radius: 18px;
+                box-shadow: 0 12px 32px rgba(57,55,91,0.18);
+            padding: 40px 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        h1 {
+            color: #39375B;
+            margin-bottom: 24px;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+        }
+        .form-section {
+            background: linear-gradient(90deg, #DC6ACF 0%, #745C97 100%);
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 2px 8px rgba(57,55,91,0.08);
+        }
+        label {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            border: 1px solid #F5B0CB;
+            border-radius: 8px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        button {
+            padding: 12px 32px;
+            background: #39375B;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #745C97;
+        }
+        .jobs-section {
+            margin-top: 16px;
+        }
+        .jobs-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+        .job-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(220,106,207,0.12);
+            padding: 24px 28px;
+            width: 320px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid #F5B0CB;
+            transition: box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(57,55,91,0.18);
+            position: relative;
+        }
+
+        .job-index {
+            position: absolute;
+            bottom: 14px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(220, 106, 207, 0.12);
+            color: #745C97;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .job-card:hover {
+            box-shadow: 0 8px 32px rgba(220,106,207,0.18);
+        }
+        .job-title {
+            color: #39375B;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .job-company {
+            color: #745C97;
+            font-weight: bold;
+        }
+        .job-meta {
+            color: #DC6ACF;
+            font-size: 1rem;
+        }
+        .job-status {
+            color: #C4BBB8;
+            font-size: 0.95rem;
+        }
+        .job-detail-link {
+            margin-top: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            background: #DC6ACF;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 10px;
+            text-decoration: none;
+            border: 1px solid rgba(220, 106, 207, 0.6);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .job-detail-link:hover {
+            background: #b454ac;
+            transform: translateY(-1px);
+        }
+        .job-detail-link:active {
+            transform: translateY(0);
+        }
+        @media (max-width: 600px) {
+            .container { padding: 16px 4px; }
+            .form-section { padding: 16px 8px; }
+            .job-card { padding: 12px 8px; min-width: 180px; }
+        }
+
+        .jobs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .jobs-header h2 {
+            margin: 0;
+            color: #745C97;
+        }
+        .page-error {
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: rgba(255, 90, 90, 0.12);
+            border: 1px solid rgba(255, 90, 90, 0.4);
+            color: #a33;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        .jobs-controls {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: center;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+        .view-toggle-btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(220, 106, 207, 0.6);
+            background: rgba(220, 106, 207, 0.1);
+            color: #39375B;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .view-toggle-btn.active {
+            background: #DC6ACF;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .sort-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(220, 106, 207, 0.08);
+            padding: 6px 10px;
+            border-radius: 999px;
+        }
+        .sort-toggle span {
+            color: #6b5c85;
+            font-size: 0.9rem;
+        }
+        .sort-btn {
+            padding: 5px 10px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #39375B;
+            border: 1px solid rgba(220, 106, 207, 0.6);
+            background: rgba(255, 255, 255, 0.65);
+            font-size: 0.85rem;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .sort-btn.active {
+            background: #DC6ACF;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .jobs-list.list-view {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .jobs-list.list-view .job-card {
+            background: transparent;
+            border: 1px solid rgba(220,106,207,0.2);
+            box-shadow: none;
+            border-radius: 12px;
+            width: 100%;
+            min-height: auto;
+            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            grid-template-rows: auto auto;
+            grid-template-areas:
+                "index title right"
+                "index company right";
+            align-items: center;
+            gap: 8px;
+        }
+
+        .jobs-list.list-view .job-card .job-index {
+            grid-area: index;
+            position: static;
+            width: auto;
+            height: auto;
+            border-radius: 6px;
+            padding: 4px 8px;
+            background: rgba(220, 106, 207, 0.12);
+            color: #745C97;
+            font-weight: bold;
+            font-size: 0.85rem;
+            justify-self: center;
+        }
+
+        .jobs-list.list-view .job-card .job-title {
+            grid-area: title;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .jobs-list.list-view .job-card .job-company {
+            grid-area: company;
+            font-size: 0.85rem;
+            color: #745C97;
+        }
+
+        .jobs-list.list-view .job-card .job-right {
+            grid-area: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            width: max-content;
+        }
+
+        .jobs-list.list-view .job-card .job-meta {
+            display: none;
+        }
+        .jobs-list.list-view .job-card .job-status {
+            font-size: 0.85rem;
+            color: #8d7c91;
+            text-align: right;
+        }
+        .jobs-list.list-view .job-card .job-detail-link {
+            margin-top: 0;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        .progress-mask {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(57,55,91,0.15);
+            z-index: 9999;
+        }
+        .progress-mask .progress-content {
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff;
+            border-radius: 8px;
+            padding: 32px 48px;
+            box-shadow: 0 2px 8px rgba(57,55,91,0.12);
+            color: #745C97;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        let progressTimer = null;
+        let progressStart = 0;
+
+        function updateProgressText() {
+            const elapsed = Math.floor((Date.now() - progressStart) / 1000);
+            const content = document.getElementById('progress-content');
+            if (content) {
+                content.textContent = `正在抓取，请稍候... (已用 ${elapsed}秒)`;
+            }
+        }
+
+        function showProgress() {
+            const mask = document.getElementById('progress-mask');
+            if (!mask) return;
+
+            mask.style.display = 'block';
+            progressStart = Date.now();
+            updateProgressText();
+            progressTimer = setInterval(updateProgressText, 1000);
+        }
+
+        function hideProgress() {
+            const mask = document.getElementById('progress-mask');
+            if (mask) mask.style.display = 'none';
+            if (progressTimer) {
+                clearInterval(progressTimer);
+                progressTimer = null;
+            }
+        }
+
+        function setViewMode(mode) {
+            const list = document.getElementById('jobs-list');
+            const buttons = document.querySelectorAll('.view-toggle-btn');
+            if (!list) return;
+
+            list.classList.toggle('list-view', mode === 'list');
+            localStorage.setItem('jobViewMode', mode);
+
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === mode);
+            });
+        }
+
+        function initViewMode() {
+            const mode = localStorage.getItem('jobViewMode') || 'card';
+            setViewMode(mode);
+
+            const toggle = document.getElementById('view-toggle');
+            if (!toggle) return;
+
+            toggle.addEventListener('click', (event) => {
+                const btn = event.target.closest('.view-toggle-btn');
+                if (!btn) return;
+                setViewMode(btn.dataset.view);
+            });
+        }
+
+        async function submitUrl(event) {
+            event.preventDefault();
+            showProgress();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    redirect: 'follow'
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    // 直接用后端返回的 HTML 内容刷新页面（包含错误提示）
+                    const html = await response.text();
+                    document.open();
+                    document.write(html);
+                    document.close();
+                }
+            } catch (e) {
+                console.error('抓取失败', e);
+                hideProgress();
+                alert('抓取失败，请重试');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initViewMode);
+    </script>
+</head>
+<body>
+<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h1>👔JobPost</h1>
+        <a href="/resume" style="padding:10px 24px;background:#DC6ACF;color:#fff;border-radius:8px;font-weight:bold;text-decoration:none;font-size:1rem;box-shadow:0 8px 24px rgba(57,55,91,0.18);transition:background 0.2s;">个人简历</a>
+    </div>
+    <div class="form-section">
+        <form method="post" action="/submit_url" onsubmit="submitUrl(event)">
+            <label for="url">职位页面URL：</label><br>
+            <input type="text" id="url" name="url" required>
+            <button type="submit">抓取并保存</button>
+        </form>
+    </div>
+    <div id="progress-mask" class="progress-mask">
+        <div class="progress-content" id="progress-content">正在抓取，请稍候...</div>
+    </div>
+    <div class="jobs-section">
+        {% if error %}
+        <div class="page-error">{{ error }}</div>
+        {% endif %}
+        <div class="jobs-header">
+            <h2>职位列表</h2>
+            <div class="jobs-controls">
+                <div class="sort-toggle">
+                    <span>排序：</span>
+                    <a href="/?sort=asc" class="sort-btn {% if sort == 'asc' %}active{% endif %}" data-sort="asc">时间↑</a>
+                    <a href="/?sort=desc" class="sort-btn {% if sort != 'asc' %}active{% endif %}" data-sort="desc">时间↓</a>
+                </div>
+                <div class="view-toggle" id="view-toggle">
+                    <button type="button" class="view-toggle-btn" data-view="card">卡片</button>
+                    <button type="button" class="view-toggle-btn" data-view="list">列表</button>
+                </div>
+            </div>
+        </div>
+        <div class="jobs-list" id="jobs-list">
+            {% for app in applications %}
+            <div class="job-card">
+                <div class="job-index">{{ loop.index }}</div>
+                <a class="job-title" href="/detail/{{ app.id }}">{{ app.job_title or '未知' }}</a>
+                <div class="job-company">{{ app.company_name or '未知' }}</div>
+                <div class="job-right">
+                    <div class="job-meta">薪水：{{ app.salary or '未知' }} | 地点：{{ app.location or '未知' }}</div>
+                    <div class="job-status">状态：
+                        {% if app.status == 'Scraped' %}已抓取待投递
+                        {% elif app.status == 'Failed' %}抓取失败
+                        {% elif app.status == 'Applied' %}已投递
+                        {% else %}{{ app.status }}
+                        {% endif %}
+                    </div>
+                    <a class="job-detail-link" href="/detail/{{ app.id }}">查看详情</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</body>
+</html>
