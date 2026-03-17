@@ -194,33 +194,68 @@
             color: #fff;
             transform: translateY(-1px);
         }
-        .filter-toggle, .sort-toggle {
+        .control-group {
             display: flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(220, 106, 207, 0.08);
-            padding: 6px 10px;
+            gap: 12px;
+        }
+        .popup-trigger {
+            position: relative;
+            padding: 8px 14px;
             border-radius: 999px;
+            background: rgba(220, 106, 207, 0.1);
+            border: 1px solid rgba(220, 106, 207, 0.6);
+            font-weight: bold;
+            cursor: pointer;
+            color: #39375B;
+            transition: background 0.2s;
         }
-        .filter-toggle span, .sort-toggle span {
-            color: #6b5c85;
-            font-size: 0.9rem;
+        .popup-trigger:hover {
+            background: rgba(220, 106, 207, 0.2);
         }
-        .filter-btn, .sort-btn {
-            padding: 5px 10px;
+        .popup-trigger:after {
+            content: "\25BE";
+            margin-left: 8px;
+            font-size: 0.7rem;
+        }
+        .popup-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 6px;
+            min-width: 180px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 20px rgba(57, 55, 91, 0.2);
+            border: 1px solid rgba(220, 106, 207, 0.25);
+            z-index: 100;
+        }
+        .popup-trigger.popup-open .popup-menu {
+            display: block;
+        }
+        .popup-menu a {
+            display: block;
+            padding: 6px 10px;
             border-radius: 999px;
             text-decoration: none;
             color: #39375B;
-            border: 1px solid rgba(220, 106, 207, 0.6);
-            background: rgba(255, 255, 255, 0.65);
+            border: 1px solid rgba(220, 106, 207, 0.4);
+            background: rgba(255, 255, 255, 0.8);
             font-size: 0.85rem;
-            transition: background 0.15s, transform 0.15s;
-            cursor: pointer;
+            margin-bottom: 6px;
+            transition: background 0.15s;
         }
-        .filter-btn.active, .sort-btn.active {
+        .popup-menu a:last-child {
+            margin-bottom: 0;
+        }
+        .popup-menu a:hover {
+            background: rgba(220, 106, 207, 0.2);
+        }
+        .popup-menu a.active {
             background: #DC6ACF;
             color: #fff;
-            transform: translateY(-1px);
         }
 
         .jobs-list.list-view {
@@ -389,6 +424,31 @@
             });
         }
 
+        function initPopupMenus() {
+            const triggers = document.querySelectorAll('.popup-trigger');
+            triggers.forEach(trigger => {
+                const menu = trigger.querySelector('.popup-menu');
+                if (!menu) return;
+
+                let hideTimeout = null;
+                const open = () => {
+                    clearTimeout(hideTimeout);
+                    trigger.classList.add('popup-open');
+                };
+                const close = () => {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = setTimeout(() => {
+                        trigger.classList.remove('popup-open');
+                    }, 150);
+                };
+
+                trigger.addEventListener('mouseenter', open);
+                trigger.addEventListener('mouseleave', close);
+                menu.addEventListener('mouseenter', open);
+                menu.addEventListener('mouseleave', close);
+            });
+        }
+
         async function submitUrl(event) {
             event.preventDefault();
             showProgress();
@@ -421,6 +481,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initViewMode();
             initFilters();
+            initPopupMenus();
         });
     </script>
 </head>
@@ -447,22 +508,28 @@
         <div class="jobs-header">
             <h2>职位列表</h2>
             <div class="jobs-controls">
-                <div class="filter-toggle">
-                    <span>筛选：</span>
-                    <button type="button" class="filter-btn {% if filter == 'all' %}active{% endif %}" data-filter="all">全部</button>
-                    <button type="button" class="filter-btn {% if filter == 'applied' %}active{% endif %}" data-filter="applied">已投递</button>
-                    <button type="button" class="filter-btn {% if filter == 'pending' %}active{% endif %}" data-filter="pending">未投递</button>
-                </div>
-                <div class="sort-toggle">
-                    <span>排序：</span>
-                    <a href="/?sort=scraped_asc&filter={{ filter }}" class="sort-btn {% if sort == 'scraped_asc' %}active{% endif %}" data-sort="scraped_asc">抓取↑</a>
-                    <a href="/?sort=scraped_desc&filter={{ filter }}" class="sort-btn {% if sort == 'scraped_desc' %}active{% endif %}" data-sort="scraped_desc">抓取↓</a>
-                    <a href="/?sort=applied_asc&filter={{ filter }}" class="sort-btn {% if sort == 'applied_asc' %}active{% endif %}" data-sort="applied_asc">投递↑</a>
-                    <a href="/?sort=applied_desc&filter={{ filter }}" class="sort-btn {% if sort == 'applied_desc' %}active{% endif %}" data-sort="applied_desc">投递↓</a>
-                </div>
-                <div class="view-toggle" id="view-toggle">
-                    <button type="button" class="view-toggle-btn" data-view="card">卡片</button>
-                    <button type="button" class="view-toggle-btn" data-view="list">列表</button>
+                <div class="control-group">
+                    <div class="popup-trigger">
+                        筛选
+                        <div class="popup-menu">
+                            <a href="/?filter=all&sort={{ sort }}" class="{% if filter == 'all' %}active{% endif %}">全部</a>
+                            <a href="/?filter=applied&sort={{ sort }}" class="{% if filter == 'applied' %}active{% endif %}">已投递</a>
+                            <a href="/?filter=pending&sort={{ sort }}" class="{% if filter == 'pending' %}active{% endif %}">未投递</a>
+                        </div>
+                    </div>
+                    <div class="popup-trigger">
+                        排序
+                        <div class="popup-menu">
+                            <a href="/?sort=scraped_desc&filter={{ filter }}" class="{% if sort == 'scraped_desc' %}active{% endif %}">抓取时间↓</a>
+                            <a href="/?sort=scraped_asc&filter={{ filter }}" class="{% if sort == 'scraped_asc' %}active{% endif %}">抓取时间↑</a>
+                            <a href="/?sort=applied_desc&filter={{ filter }}" class="{% if sort == 'applied_desc' %}active{% endif %}">投递时间↓</a>
+                            <a href="/?sort=applied_asc&filter={{ filter }}" class="{% if sort == 'applied_asc' %}active{% endif %}">投递时间↑</a>
+                        </div>
+                    </div>
+                    <div class="view-toggle" id="view-toggle">
+                        <button type="button" class="view-toggle-btn" data-view="card">卡片</button>
+                        <button type="button" class="view-toggle-btn" data-view="list">列表</button>
+                    </div>
                 </div>
             </div>
         </div>
